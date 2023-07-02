@@ -1,3 +1,5 @@
+Copy of [repository](https://github.com/OxCSML-BayesNP/NGGP) and editted for my dissertation:
+
 # The Normal-Generalised Gamma-Pareto process
 Code for the paper: "The Normal-Generalised Gamma-Pareto process: A novel pure-jump Levy process with flexible tail and jump-activity properties".
 
