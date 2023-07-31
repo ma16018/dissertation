@@ -8,12 +8,12 @@ import argparse
 import os
 import pickle
 from scipy.stats.mstats import mquantiles
-from metrics import KS, bayes_L1_loss, bayes_L2_loss, uniform_KS
+#from metrics import KS, bayes_L1_loss, bayes_L2_loss, uniform_KS
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--filename', type=str, default=None)
 parser.add_argument('--run_names', type=str, nargs='+', default=['chain1', 'chain2', 'chain3'])
-parser.add_argument('--show', action='store_true')
+parser.add_argument('--show', action='store_true', default=False)
 parser.add_argument('--norm', action='store_false')
 
 args = parser.parse_args()
@@ -56,6 +56,7 @@ plt.fill_between(range(T), qnts[0], qnts[1],
 plt.legend(fontsize=20)
 plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
+plt.title('Gamma', fontsize=20)
 plt.xlabel('Time', fontsize=20)
 plt.ylabel('Volatility', fontsize=20)
 
@@ -76,6 +77,7 @@ plt.fill_between(range(T), qnts[0], qnts[1],
 plt.legend(fontsize=20)
 plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
+plt.title('GBFRY', fontsize=20)
 plt.xlabel('Time', fontsize=20)
 plt.ylabel('Volatility', fontsize=20)
 

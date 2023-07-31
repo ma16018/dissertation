@@ -11,12 +11,14 @@ import json
 import os
 import pickle
 
-from mcmc import PMMH
+from mcmc import PMMH, CorrPMMH, CorrPMMH2
 import particles
 import particles.distributions as dists
 
 from gamma_driven_sv import GammaDrivenSV
 from gbfry_driven_sv import GBFRYDrivenSV
+
+from correlated import SMCCorrelated, SMCCorrelated2
 
 parser = argparse.ArgumentParser()
 
@@ -26,7 +28,7 @@ parser.add_argument('--model', type=str, default='gbfry',
 parser.add_argument('--norm', action='store_false', default=True)
 
 # for PMMH
-parser.add_argument('--save_states', action='store_false')
+parser.add_argument('--save_states', action='store_false', default=True)
 parser.add_argument('--Nx', type=int, default=1000)
 parser.add_argument('--burnin', type=int, default=None)
 parser.add_argument('--niter', type=int, default=5000)
@@ -67,6 +69,7 @@ else:
     print('here')
     y = datafile['y']
 
+y = np.stack(y).squeeze()
 pmmh = PMMH(ssm_cls=ssm_cls, data=y,
         prior=prior, theta0=ssm_cls.get_theta0(y),
         Nx=args.Nx, niter=args.niter, keep_states=args.save_states,
@@ -76,9 +79,42 @@ pmmh.run()
 burnin = args.burnin or args.niter // 2
 
 if args.save_states:
-    x = np.stack(pmmh.states[burnin:], 0)[:, :, 0]
+    x = np.stack(pmmh.states, 0)[:, :, 0]
     with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
         pickle.dump(x, f)
 
 with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
-    pickle.dump(pmmh.chain[burnin:], f)
+    pickle.dump(pmmh.chain, f)
+
+# Correlated
+# pmmh = CorrPMMH(ssm_cls=ssm_cls, data=y,
+#         prior=prior, theta0=ssm_cls.get_theta0(y),
+#         Nx=args.Nx, niter=args.niter,
+#         verbose=args.niter/args.verbose)
+# pmmh.run()
+# if args.save_states:
+#     x = np.stack(pmmh.states, 0)
+#     print("Saving states")
+#     with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
+#         pickle.dump(x, f)
+
+# print("Saving chains")
+# with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
+#     pickle.dump(pmmh.chain, f)
+    
+
+# Correlated 2
+# pmmh = CorrPMMH2(ssm_cls=ssm_cls, data=y,
+#         prior=prior, theta0=ssm_cls.get_theta0(y),
+#         Nx=args.Nx, niter=args.niter,
+#         verbose=args.niter/args.verbose, smc_cls=SMCCorrelated2)
+# pmmh.run()
+# if args.save_states:
+#     x = np.stack(pmmh.states, 0)
+#     print("Saving states")
+#     with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
+#         pickle.dump(x, f)
+
+# print("Saving chains")
+# with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
+#     pickle.dump(pmmh.chain, f)

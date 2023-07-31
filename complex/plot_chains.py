@@ -18,6 +18,7 @@ parser.add_argument('--model', type=str, default='gbfry', choices=['gamma', 'gbf
 parser.add_argument('--run_names', type=str, nargs='+', default=['chain1', 'chain2', 'chain3'])
 parser.add_argument('--show', action='store_true', default=False)
 parser.add_argument('--norm', action='store_false', default=True)
+parser.add_argument('--niter', type=int, default=100)
 
 args = parser.parse_args()
 
@@ -53,6 +54,7 @@ for run_name in args.run_names:
 with open(os.path.join(args.filename), 'rb') as f:
     datafile = pickle.load(f, encoding='latin1')
 
+iters = range(args.niter)
 for i, key in enumerate(keys):
     gathered = []
     param_latex = r"${}$".format(ssm_cls.params_latex[key])
@@ -65,8 +67,8 @@ for i, key in enumerate(keys):
     for j, chain in enumerate(chains):
         val = ssm_cls.params_transform[key](chain.theta[key])
         gathered.append(np.array(val))
-        plt.plot(range(2500, 5000), val, linewidth=0.7, label='Chain {}'.format(j+1))
-        plt.xlim([2500, 5000])
+        plt.plot(iters, val, linewidth=0.7, label='Chain {}'.format(j+1))
+        plt.xlim([1, args.niter])
     if true_val is not None:
         plt.axhline(true_val, color='k', linestyle='--', linewidth=1.2)
     plt.xlabel('Iteration', fontsize=15)

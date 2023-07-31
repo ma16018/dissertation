@@ -7,7 +7,7 @@ import seaborn as sb
 import argparse
 import os
 import pickle
-from metrics import KS, bayes_L1_loss, bayes_L2_loss, uniform_KS
+from metrics2 import KS, uniform_KS, bayes_risk_loss, l2_loss
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--filename', type=str, default=None)
@@ -46,21 +46,21 @@ with open('metrics/{}.txt'.format(data), 'w') as logf:
         print(model)
         logf.write(model + '\n')
 
-        line = 'Bayes L2 loss: {:.4f}'.format(bayes_L2_loss(x, true_x))
+        line = 'Bayes L2 loss: {:.4f}'.format(l2_loss(x, true_x))
         print(line)
         logf.write(line + '\n')
 
-        line = 'KS(pi, U(0, 1): {:.4f}'.format(uniform_KS(x, true_x))
-        print(line)
-        logf.write(line + '\n')
+        # line = 'KS(pi, U(0, 1): {:.4f}'.format(uniform_KS(x, true_x))
+        # print(line)
+        # logf.write(line + '\n')
 
-        line = 'reweighted KS(pi, U(0, 1)): {:.4f}'.format(uniform_KS(x, true_x, reweighted=True))
-        print(line)
-        logf.write(line + '\n')
+        # line = 'reweighted KS(pi, U(0, 1)): {:.4f}'.format(uniform_KS(x, true_x, reweighted=True))
+        # print(line)
+        # logf.write(line + '\n')
 
         losses = []
         for alpha in alpha_list:
-            loss = bayes_L1_loss(x, true_x, alpha=alpha)
+            loss = bayes_risk_loss(x, true_x, alpha=alpha)
             losses.append(loss)
             line = 'Bayes L1 loss (alpha={:.2f}): {:.4f}'.format(alpha, loss)
             print(line)
