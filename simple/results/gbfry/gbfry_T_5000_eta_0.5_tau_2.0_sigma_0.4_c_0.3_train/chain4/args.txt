@@ -1,0 +1,10 @@
+{
+  "filename": "../data/simulated/gbfry_T_5000_eta_0.5_tau_2.0_sigma_0.4_c_0.3_train.pkl",
+  "model": "gbfry",
+  "save_states": true,
+  "Nx": 100,
+  "burnin": null,
+  "niter": 100,
+  "verbose": 100,
+  "run_name": "chain4"
+}

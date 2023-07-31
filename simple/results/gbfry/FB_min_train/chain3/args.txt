@@ -1,0 +1,10 @@
+{
+  "filename": "../data/data_minute_tech/FB_min_train.pkl",
+  "model": "gbfry",
+  "save_states": true,
+  "Nx": 1000,
+  "burnin": null,
+  "niter": 2000,
+  "verbose": 100,
+  "run_name": "chain3"
+}

@@ -1,0 +1,10 @@
+gbfry
+Bayes L2 loss: 0.0848
+Bayes L1 loss (alpha=0.50): 0.1578
+Bayes L1 loss (alpha=0.60): 0.1289
+Bayes L1 loss (alpha=0.70): 0.1036
+Bayes L1 loss (alpha=0.80): 0.0771
+Bayes L1 loss (alpha=0.90): 0.0467
+Bayes L1 loss (alpha=0.95): 0.0284
+Bayes L1 loss (alpha=0.99): 0.0086
+
