@@ -1,0 +1,11 @@
+{
+  "filename": "../data/simulated/gbfry_driven_sv_T_5000_eta_1.0_tau_3.0_c_1.0.pkl",
+  "model": "gamma",
+  "norm": true,
+  "save_states": true,
+  "Nx": 100,
+  "burnin": 100,
+  "niter": 200,
+  "verbose": 100,
+  "run_name": "chain1"
+}

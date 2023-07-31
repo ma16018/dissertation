@@ -3,9 +3,9 @@
   "model": "gbfry",
   "norm": true,
   "save_states": true,
-  "Nx": 2500,
-  "burnin": 1250,
-  "niter": 5000,
+  "Nx": 100,
+  "burnin": null,
+  "niter": 100,
   "verbose": 100,
   "run_name": "chain1"
 }
