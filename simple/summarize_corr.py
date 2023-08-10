@@ -29,6 +29,7 @@ parser.add_argument('--run_names', type=str, nargs='+',
                     # default=['chain7', 'chain8', 'chain9'])
 parser.add_argument('--show', action='store_true')
 parser.add_argument('--no_states', action='store_true')
+parser.add_argument('--end', type=str, default='')
 
 args = parser.parse_args()
 
@@ -83,14 +84,13 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 for run_name in args.run_names:
-    with open(os.path.join(save_dir, run_name, 'chain.pkl'), 'rb') as f:
+    with open(os.path.join(save_dir, run_name, 'chain_corr{}.pkl'.format(args.end)), 'rb') as f:
         chain = pickle.load(f)
         n = len(chain.theta)
         burnin = np.min((n//2, 500))
         # burnin = 0
         chains.append(chain[burnin:])
 
-# particles = [100, 250, 500, 750, 1000, 1500, 2000, 3000, 4000]
 gathered = {}
 for key in keys:
     params = r"${}$".format(ssm_cls.params_latex[key])
@@ -100,16 +100,13 @@ for key in keys:
     plt.xlabel("Iteration")
     plt.title("Trace Plot")
     c_id = 1
-    i=0
     for chain in chains:
         val = ssm_cls.params_transform[key](chain.theta[key])
         gathered[params].append(np.array(val))
-        # plt.plot(np.arange(burnin, n), val, linewidth=1, label='{}'.format(particles[i]))
-        i += 1
         plt.plot(np.arange(burnin, n), val, linewidth=0.7, label='Chain {}'.format(c_id))
         c_id += 1
-    plt.legend(title='Particles')
-    plt.savefig(os.path.join(fig_dir, '{}_trace_plot.png'.format(ssm_cls.params_name[key])),
+    plt.legend()
+    plt.savefig(os.path.join(fig_dir, '{}_trace_plot_corr.png'.format(ssm_cls.params_name[key])),
             bbox_inches='tight')
 
 
@@ -118,11 +115,9 @@ for key in keys:
     plt.xlabel(params)
     plt.title("Histogram")
     val = np.concatenate(gathered[params])
-    # sb.distplot(val, 20, color='r')
-    sb.histplot(val, color='r', stat='density')
-    sb.kdeplot(val, color='r')
+    sb.distplot(val, 20, color='r')
     #plt.legend()
-    plt.savefig(os.path.join(fig_dir, '{}_histogram.png'.format(ssm_cls.params_name[key])),
+    plt.savefig(os.path.join(fig_dir, '{}_histogram_corr.png'.format(ssm_cls.params_name[key])),
             bbox_inches='tight')
 
 
@@ -131,17 +126,17 @@ for i, params in enumerate(gathered.keys()):
     plt.subplot(2, int(np.ceil(.5*len(keys))), i+1)
     plt.title(params)
     val = np.concatenate(gathered[params])
+    # sb.distplot(val, 35, color='r')
     sb.histplot(val, stat='density')
     sb.kdeplot(val)
-    # sb.distplot(val, 35, color='r')
 plt.tight_layout()
-plt.savefig(os.path.join(fig_dir, 'posteriors.png'),
+plt.savefig(os.path.join(fig_dir, 'posteriors_corr.png'),
         bbox_inches='tight')
 
 if not args.no_states:
     states = []
     for run_name in args.run_names:
-        with open(os.path.join(save_dir, run_name, 'states.pkl'), 'rb') as f:
+        with open(os.path.join(save_dir, run_name, 'states_corr{}.pkl'.format(args.end)), 'rb') as f:
             states.append(pickle.load(f))
     x = np.concatenate(states, 0)
 

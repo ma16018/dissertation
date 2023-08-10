@@ -138,13 +138,79 @@ class SMCCorrelated2(SMC):
 
 # def calc_logLt(mat):
         
+    
+class SMCCorrelatedIID(SMC):
+    def __init__(self, 
+                 fk=None,
+                 N=100,
+                 qmc=False,
+                 resampling="systematic",
+                 ESSrmin=0.5,
+                 store_history=True,
+                 verbose=False,
+                 collect=None,
+                 historyX=None,
+                 perc=0.1):
+        super(SMCCorrelatedIID, self).__init__(fk=fk,
+                                            N=N,
+                                            qmc=qmc,
+                                            resampling=resampling,
+                                            ESSrmin=ESSrmin,
+                                            store_history=store_history,
+                                            verbose=verbose,
+                                            collect=collect)
+        self.num_keep = int(N*perc) if historyX else 0
+        self.random_indices = np.random.choice(N, self.num_keep, replace=False)
+        self.historyX = historyX
         
+    def resample_move(self):
+        super().resample_move()
+        if self.historyX:
+            self.X[self.random_indices] = self.historyX[self.t][self.random_indices]
+
+
+class SMCCorrelatedIIDComplex(SMC):
+    def __init__(self, 
+                 fk=None,
+                 N=100,
+                 qmc=False,
+                 resampling="systematic",
+                 ESSrmin=0.5,
+                 store_history=True,
+                 verbose=False,
+                 collect=None,
+                 historyX=None,
+                 parts=2):
+        super(SMCCorrelatedIIDComplex, self).__init__(fk=fk,
+                                            N=N,
+                                            qmc=qmc,
+                                            resampling=resampling,
+                                            ESSrmin=ESSrmin,
+                                            store_history=store_history,
+                                            verbose=verbose,
+                                            collect=collect)
+        self.num_keep = int(N*0.2) if historyX else 0
+        self.random_indices = np.random.choice(N, self.num_keep, replace=False)
+        self.historyX = historyX
+        self.parts = parts
         
-        
-        
-        
-        
-        
-        
-        
+    def resample_move(self):
+        if self.historyX and np.random.choice(2)==0:    
+            self.rs_flag = self.fk.time_to_resample(self)
+            if self.rs_flag:  # if resampling
+                self.A = rs.resampling(self.resampling, self.aux.W, M=self.N)
+                self.Xp = self.X[self.A]
+                self.reset_weights()
+            else:
+                self.A = np.arange(self.N)
+                self.Xp = self.X
+            self.X = self.historyX[self.t]
+            change = np.random.choice(self.parts)
+            self.X[:, change] = self.fk.M(self.t, self.Xp)[:, change]
+        else:
+            super().resample_move()
+           
+    def reweight_particles(self):
+        X = np.sum(self.X, axis=1)
+        self.wgts = self.wgts.add(self.fk.logG(self.t, self.Xp, X))
         
