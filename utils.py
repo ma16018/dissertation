@@ -1,5 +1,6 @@
 import numpy as np
 import numba as nb
+from statsmodels.tsa.stattools import acf
 
 def logit(x, lb=0., ub=1.):
     z = (x-lb)/(ub-lb)
@@ -71,3 +72,12 @@ def ecdf(samples, x=None):
     cdf_eval = cdf_eval/len(sorted_samples)
     cdf_eval[-1] += np.sum(sorted_samples==x[-1])/len(sorted_samples)
     return cdf_eval
+
+def ess(chain):
+    n = len(chain)
+    autocorr = acf(chain, nlags=n, fft=True)
+    sums = 0
+    for k in range(1, len(autocorr)):
+        sums = sums + (n-k)*autocorr[k]/n
+
+    return n/(1 + 2*sums)

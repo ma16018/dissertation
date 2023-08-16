@@ -14,26 +14,32 @@ from scipy.special import gamma
 from scipy.stats import moment
 import seaborn as sb
 
-filename = '../data/simulated/gbfry_T_5000_eta_1.0_tau_3.0_sigma_0.6_c_1.0'
+filename = '../data/simulated/gbfry_driven_sv_T_1000_eta_5.0_tau_1.5_c_1.0'
+tau = 1.5
+# filename = '../data/simulated/gbfry_driven_sv_T_1000_eta_5.0_tau_3.0_c_1.0'
+# tau = 3
+
+# filename = '../data/simulated/gamma_driven_sv_T_5000_eta_1.0_c_1.0'
 model = 'gbfry'
+# model = 'gamma'
 trials = 10
 
-FB = '../data/data_minute_tech/FB_min_train.pkl'
-with open(os.path.join(FB), 'rb') as f:
-    datafile = pickle.load(f, encoding='latin1')
-    datafile = datafile[datafile.Volume >= 200]
-    FB_y = datafile['y']
-    FB_y = FB_y / np.std(FB_y)
-    FB_st = datafile['Open']
-FB_sim = '../data/simulated/gbfry_T_5000_eta_0.85_tau_1.97_sigma_0.25_c_1.86_train_1.pkl'
-with open(os.path.join(FB_sim), 'rb') as f:
-    datafile = pickle.load(f, encoding='latin1')
-    datafile = datafile[datafile.Volume >= 200]
-    FB_y_sim = datafile['y']
-    FB_y_sim = FB_y_sim / np.std(FB_y_sim)
-    std_true = np.std(datafile['y'])
-    datafile['y'] = datafile['y'].values / std_true
-    FB_data = datafile
+# FB = '../data/data_minute_tech/FB_min_train.pkl'
+# with open(os.path.join(FB), 'rb') as f:
+#     datafile = pickle.load(f, encoding='latin1')
+#     datafile = datafile[datafile.Volume >= 200]
+#     FB_y = datafile['y']
+#     FB_y = FB_y / np.std(FB_y)
+#     FB_st = datafile['Open']
+# FB_sim = '../data/simulated/gbfry_T_5000_eta_0.85_tau_1.97_sigma_0.25_c_1.86_train_1.pkl'
+# with open(os.path.join(FB_sim), 'rb') as f:
+#     datafile = pickle.load(f, encoding='latin1')
+#     datafile = datafile[datafile.Volume >= 200]
+#     FB_y_sim = datafile['y']
+#     FB_y_sim = FB_y_sim / np.std(FB_y_sim)
+#     std_true = np.std(datafile['y'])
+#     datafile['y'] = datafile['y'].values / std_true
+#     FB_data = datafile
     
 
 # Set font sizes
@@ -118,8 +124,8 @@ ssm_options = {}
 # Density plots
 
 # Plots
-trial = 5
-df = true_list[trial-1]
+trial = 1
+df = train_list[trial-1]
 vbar = np.stack(df['x']).squeeze()
 y = np.stack(df['y']).squeeze()
 Xt = np.cumsum(y)
@@ -137,7 +143,7 @@ axs[2].set_title("Log-stock price")
 axs[2].set_ylabel(r"$X_t$")
 axs[2].set_xlabel("t")
 fig.tight_layout()
-plt.savefig(os.path.join(fig_dir, 'trajectories_{}.png'.format(str(trial))), 
+plt.savefig(os.path.join(fig_dir, 'trajectories_train_tau_{}.png'.format(str(tau))), 
             bbox_inches='tight')
 
 
@@ -151,67 +157,79 @@ y_all = np.concatenate(y_all)
 plt.figure()
 sb.kdeplot(y_all)
 plt.xlabel("y")
-plt.title(r"Empirical density of $Y_k$ for $\tau=3, \sigma=0.6$")
+plt.title(r"Empirical density of $Y_k$ for $\tau=1.5$ in OU model")
 # sb.histplot(y_all, stat='density')
-plt.savefig(os.path.join(fig_dir, 'density_y_t3_s6.png'), bbox_inches='tight')
+plt.savefig(os.path.join(fig_dir, 'density_y_tau_{}.png'.format(tau)), bbox_inches='tight')
 plt.figure()
 sb.kdeplot(vbar_all)
 plt.xlabel(r"$\bar{V}_k$")
-plt.title(r"Empirical density of $\bar{V}_k$ for $\tau=3, \sigma=0.6$")
+plt.title(r"Empirical density of $\bar{V}_k$ for $\tau=1.5$ in OU model")
 # sb.histplot(vbar_all, stat='density')
-plt.savefig(os.path.join(fig_dir, 'density_vbar_t3_s6.png'), bbox_inches='tight')
+plt.savefig(os.path.join(fig_dir, 'density_vbar_tau_{}.png'.format(tau)), bbox_inches='tight')
 
-params1 = {
-    "eta": 1.0,
-    "c": 1.0,
-    "tau": 2.2,
-    "sigma": 0.2
-}
-params2 = {
-    "eta": 1.0,
-    "c": 1.0,
-    "tau": 3.,
-    "sigma": 0.2
-}
-params3 = {
-    "eta": 1.0,
-    "c": 1.0,
-    "tau": 3.,
-    "sigma": 0.6
-}
-params4 = {
-    "eta": 1.0,
-    "c": 1.0,
-    "tau": 4.,
-    "sigma": 0.9
-}
-params_list = [params2, params3, params4]
-trial=str(1)
-plt.figure(figsize=(10, 8))
-for i, params in enumerate(params_list):
-    filename = ('../data/simulated/gbfry_'
-                'T_{}_'
-                'eta_{}_'
-                'tau_{}_'
-                'sigma_{}_'
-                'c_{}'
-                '_test_{}.pkl'
-                .format(5000, params['eta'], params['tau'], params['sigma'], 
-                        params['c'], trial))
+taus = [1.5, 3.]
+trial = 1
+plt.figure(figsize=(8, 6))
+for i, tau in enumerate(taus):
+    filename = ('../data/simulated/gbfry_driven_sv_T_1000_eta_5.0_tau_{}_c_1.0_test_{}.pkl'
+                .format(tau, trial))
     with open(os.path.join(filename), 'rb') as f:
         datafile = pickle.load(f, encoding='latin1')
         datafile = datafile[datafile.Volume >= 200]
         vbar = np.stack(datafile['x']).squeeze()
         std_true = np.std(datafile['y'])
         y = datafile['y'].values / std_true
-        sb.kdeplot(vbar, label=r"$\tau={}, \sigma={}$".format(params['tau'], 
-                                                          params['sigma']))
+        sb.kdeplot(vbar, label=r"$\tau={}$".format(tau))
         # sb.histplot(vbar, stat='density')
 plt.legend()
 plt.xlabel(r"$\bar{v}_k$")
-plt.title(r"Empirical density of $\bar{V}_k$ from simulated GGP model")
+plt.title(r"Empirical density of simulated $\bar{V}_k$ from OU GBFRY")
 # plt.xlim([0, 10])
 plt.savefig(os.path.join(fig_dir, 'densities_vbar.png'), bbox_inches='tight')
+
+taus = [1.5, 3.]
+trial = 1
+plt.figure(figsize=(8, 6))
+for i, tau in enumerate(taus):
+    filename = ('../data/simulated/gbfry_driven_sv_T_1000_eta_5.0_tau_{}_c_1.0_test_{}.pkl'
+                .format(tau, trial))
+    with open(os.path.join(filename), 'rb') as f:
+        datafile = pickle.load(f, encoding='latin1')
+        datafile = datafile[datafile.Volume >= 200]
+        vbar = np.stack(datafile['x']).squeeze()
+        std_true = np.std(datafile['y'])
+        y = datafile['y'].values / std_true
+        sb.kdeplot(y, label=r"$\tau={}$".format(tau))
+        # sb.histplot(vbar, stat='density')
+plt.legend()
+plt.xlabel(r"$Y_k$")
+plt.title(r"Empirical density of simulated $Y_k$ from OU GBFRY")
+# plt.xlim([0, 10])
+plt.savefig(os.path.join(fig_dir, 'densities_y.png'), bbox_inches='tight')
+
+taus = [1.5, 3.]
+trials = np.arange(1, 5)
+plt.figure(figsize=(8, 6))
+for tau in taus:
+    for trial in trials:
+        filename = ('../data/simulated/gbfry_driven_sv_T_1000_eta_5.0_tau_{}_c_1.0_test_{}.pkl'
+                    .format(tau, trial))
+        with open(os.path.join(filename), 'rb') as f:
+            datafile = pickle.load(f, encoding='latin1')
+            datafile = datafile[datafile.Volume >= 200]
+            std_true = np.std(datafile['y'])
+            y = datafile['y'].values / std_true
+            Xt = np.cumsum(y)
+            line_color = 'blue' if tau == 1.5 else 'green'
+            plt.plot(Xt, label=r"$\tau={}$, trial={}".format(tau, trial), color=line_color)
+            # sb.kdeplot(y, label=r"$\tau={}$".format(tau))
+            # sb.histplot(vbar, stat='density')
+# plt.legend()
+plt.xlabel(r"$t$")
+plt.ylabel(r"$X_t$")
+plt.title(r"Log-stock price trajectory for OU GBFRY model")
+# plt.xlim([0, 10])
+plt.savefig(os.path.join(fig_dir, 'xt_taus.png'), bbox_inches='tight')
 
 plt.figure(figsize=(8, 5))
 for i, df in enumerate(true_list):
@@ -240,9 +258,9 @@ def ggp_var(eta, sigma, tau, c, t=1):
 
 df = true_list[0]
 vbar = np.stack(df['x']).squeeze()
-k1 = km(m=1, eta=1, tau=3, sigma=0.6, c=1)
-k2 = km(m=2, eta=1, tau=3, sigma=0.6, c=1)
-var = ggp_var(eta=1, tau=3, sigma=0.6, c=1)
+k1 = km(m=1, eta=5, tau=3, sigma=0, c=1)
+k2 = km(m=2, eta=5, tau=3, sigma=0, c=1)
+var = ggp_var(eta=5, tau=3, sigma=0, c=1)
 # k3 = km(m=3, eta=1, tau=3, sigma=0.6, c=1) # gives infinity
 
 means = []
@@ -323,7 +341,7 @@ plt.plot(x, y)
 x0 = 3
 i = min(range(len(x)), key=lambda j: abs(x[j] - x0))
 slope = (y[-1] - y[i]) / (x[-1] - x[i])
-print('Slope at ', x0, 'is', slope)  # -3.3635665021278665
+print('Slope at ', (x[-1] + x[i])/2, 'is', slope)  # -3.3635665021278665
 def tangent_line(x_val):
     return slope * (x_val - x0) + y[i]
 plt.figure()

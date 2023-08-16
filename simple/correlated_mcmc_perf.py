@@ -11,12 +11,13 @@ model = 'gbfry'
 data = os.path.splitext(os.path.basename(filename))[0]
 save_dir = os.path.join('results', model, data)
 prefix = '{}_{}'.format(data, model)
+run_names = ['esstest']
 run_names = ['particles1000', 'particles1000-2', 'particles1000-3']
 
 acc_nums_corr = []
 rates_corr = []
 for run_name in run_names:
-    with open(os.path.join(save_dir, run_name, 'acceptance_number_corr_0.15.pkl'), 'rb') as f:
+    with open(os.path.join(save_dir, run_name, 'acceptance_number_corr_0.3.pkl'), 'rb') as f:
         number = pickle.load(f)
         acc_nums_corr.append(number)
         niter = number.shape[0]
@@ -25,7 +26,7 @@ for run_name in run_names:
         
 chains = []
 for run_name in run_names:
-    with open(os.path.join(save_dir, run_name, 'chain_corr_0.15.pkl'), 'rb') as f:
+    with open(os.path.join(save_dir, run_name, 'chain_corr_0.3.pkl'), 'rb') as f:
         chain = pickle.load(f)
         n = len(chain.theta)
         burnin = np.min((n//2, 500))
@@ -52,7 +53,12 @@ for run_name in run_names:
         burnin = np.min((n//2, 500))
         # burnin = 0
         chains_norm.append(chain[burnin:])
-
+        
+ess = []
+for run_name in run_names:
+    with open(os.path.join(save_dir, run_name, 'ess.pkl'), 'rb') as f:
+        ess = pickle.load(f)
+        
 # Set font sizes
 SMALL_SIZE = 16
 MEDIUM_SIZE = 18

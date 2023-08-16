@@ -8,9 +8,11 @@ import argparse
 import json
 import os
 import pickle
+import time
 
 from mcmc import PMMH, CorrPMMH, CorrPMMH2, CorrPMMHIID, CorrPMMHIIDComplex
 from particles.mcmc import BasicRWHM
+from particles import smc_samplers as ssp
 
 from nig_iid import NIGIID
 from gamma_iid_incr import GammaIIDIncr
@@ -31,10 +33,10 @@ parser.add_argument('--model', type=str, default='gbfry', choices=['gbfry', 'gam
 
 # for PMMH
 parser.add_argument('--save_states', type=bool, default=True) #action='store_true')
-parser.add_argument('--Nx', type=int, default=500)
+parser.add_argument('--Nx', type=int, default=150)
 parser.add_argument('--burnin', type=int, default=None)
-parser.add_argument('--niter', type=int, default=5000)
-parser.add_argument('--verbose', type=int, default=100)
+parser.add_argument('--niter', type=int, default=50)
+parser.add_argument('--verbose', type=int, default=10)
 
 # for saving
 parser.add_argument('--run_name', type=str, default='trial')
@@ -86,41 +88,54 @@ else:
 prior = ssm_cls.get_prior()
 theta0 = ssm_cls.get_theta0(y)
 
+# Alternative theta0
+# with open(os.path.join('results', args.model, data, 'particles1500', 'chain.pkl'), 'rb') as f:
+#     chain = pickle.load(f)
+#     theta0 = ssm_cls.get_theta0(y)
+#     theta0[0] = chain.theta[-1]
+
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 with open(os.path.join(save_dir, 'args.txt'), 'w') as f:
     json.dump(args.__dict__, f, indent=2)
 
-# if mh_flag:
-#     model = ssm_cls(data=y, prior=prior)
-#     pmmh = BasicRWHM(niter=args.niter, verbose=args.niter/args.verbose,
-#                       theta0=theta0, model=model)
-# else:
-#     pmmh = PMMH(ssm_cls=ssm_cls, data=y,
-#             prior=prior, theta0=ssm_cls.get_theta0(y),
-#             Nx=args.Nx, niter=args.niter, keep_states=args.save_states,
-#             ssm_options=ssm_options, verbose=args.niter/args.verbose)
-# pmmh.run()
+start_time = time.time()
+if mh_flag:
+    model = ssm_cls(data=y, prior=prior)
+    pmmh = BasicRWHM(niter=args.niter, verbose=args.niter/args.verbose,
+                      theta0=theta0, model=model)
+else:
+    pmmh = PMMH(ssm_cls=ssm_cls, data=y,
+            prior=prior, theta0=theta0,
+            Nx=args.Nx, niter=args.niter, keep_states=args.save_states,
+            ssm_options=ssm_options, verbose=args.niter/args.verbose)
+pmmh.run()
+end_time = time.time()
 
-# burnin = args.burnin or args.niter // 2
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.6f} seconds")
 
-# print("Saving chains")
-# with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
-#     pickle.dump(pmmh.chain, f)
+burnin = args.burnin or args.niter // 2
 
-# if args.save_states:
-#     x = np.stack(pmmh.states, 0)
-#     print("Saving states")
-#     with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
-#         pickle.dump(x, f)
-#     print("Saving acceptance")
-#     a = np.stack(pmmh.acceptance_rates, 0)
-#     b = np.stack(pmmh.acceptance_nums, 0)
-#     with open(os.path.join(save_dir, 'acceptance_number.pkl'), 'wb') as f:
-#         pickle.dump(b, f)
-#     with open(os.path.join(save_dir, 'acceptance_rate.pkl'), 'wb') as f:
-#         pickle.dump(a, f)
+print("Saving chains")
+with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
+    pickle.dump(pmmh.chain, f)
+
+if args.save_states:
+    x = np.stack(pmmh.states, 0)
+    print("Saving states")
+    with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
+        pickle.dump(x, f)
+    print("Saving acceptance")
+    a = np.stack(pmmh.acceptance_rates, 0)
+    b = np.stack(pmmh.acceptance_nums, 0)
+    with open(os.path.join(save_dir, 'acceptance_number.pkl'), 'wb') as f:
+        pickle.dump(b, f)
+    with open(os.path.join(save_dir, 'acceptance_rate.pkl'), 'wb') as f:
+        pickle.dump(a, f)
+    with open(os.path.join(save_dir, 'ess.pkl'), 'wb') as f:
+        pickle.dump(pmmh.ess_df, f)
 
 # Correlated
 # pmmh = CorrPMMH(ssm_cls=ssm_cls, data=y,
@@ -156,26 +171,26 @@ with open(os.path.join(save_dir, 'args.txt'), 'w') as f:
 #     pickle.dump(pmmh.chain, f)
 
 # Correlated 3
-perc = 0.3  # do max 0.3
-pmmh = CorrPMMHIID(ssm_cls=ssm_cls, data=y,
-        prior=prior, theta0=ssm_cls.get_theta0(y),
-        Nx=args.Nx, niter=args.niter,
-        verbose=args.niter/args.verbose, perc=perc)
-pmmh.run()
-print("Saving chains")
-with open(os.path.join(save_dir, 'chain_corr_{}.pkl'.format(perc)), 'wb') as f:
-    pickle.dump(pmmh.chain, f)
-print("Saving acceptance")
-a = np.stack(pmmh.acceptance_rates, 0)
-b = np.stack(pmmh.acceptance_nums, 0)
-with open(os.path.join(save_dir, 'acceptance_rate_corr_{}.pkl'.format(perc)), 'wb') as f:
-    pickle.dump(a, f)
-with open(os.path.join(save_dir, 'acceptance_number_corr_{}.pkl'.format(perc)), 'wb') as f:
-    pickle.dump(b, f)
-print("Saving states")
-x = np.stack(pmmh.states, 0)
-with open(os.path.join(save_dir, 'states_corr_{}.pkl'.format(perc)), 'wb') as f:
-    pickle.dump(x, f)
+# perc = 0.3  # do max 0.3
+# pmmh = CorrPMMHIID(ssm_cls=ssm_cls, data=y,
+#         prior=prior, theta0=ssm_cls.get_theta0(y),
+#         Nx=args.Nx, niter=args.niter,
+#         verbose=args.niter/args.verbose, perc=perc)
+# pmmh.run()
+# print("Saving chains")
+# with open(os.path.join(save_dir, 'chain_corr_{}.pkl'.format(perc)), 'wb') as f:
+#     pickle.dump(pmmh.chain, f)
+# print("Saving acceptance")
+# a = np.stack(pmmh.acceptance_rates, 0)
+# b = np.stack(pmmh.acceptance_nums, 0)
+# with open(os.path.join(save_dir, 'acceptance_rate_corr_{}.pkl'.format(perc)), 'wb') as f:
+#     pickle.dump(a, f)
+# with open(os.path.join(save_dir, 'acceptance_number_corr_{}.pkl'.format(perc)), 'wb') as f:
+#     pickle.dump(b, f)
+# print("Saving states")
+# x = np.stack(pmmh.states, 0)
+# with open(os.path.join(save_dir, 'states_corr_{}.pkl'.format(perc)), 'wb') as f:
+#     pickle.dump(x, f)
 
 
 # Correlated 4

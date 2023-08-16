@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 sys.path.append('../')
 
@@ -59,6 +60,7 @@ prior = ssm_cls.get_prior()
 
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
+    print("Made folder")
 
 with open(os.path.join(save_dir, 'args.txt'), 'w') as f:
     json.dump(args.__dict__, f, indent=2)
@@ -82,9 +84,22 @@ if args.save_states:
     x = np.stack(pmmh.states, 0)[:, :, 0]
     with open(os.path.join(save_dir, 'states.pkl'), 'wb') as f:
         pickle.dump(x, f)
+        print("Saved states")
+    print("Saving acceptance")
+    a = np.stack(pmmh.acceptance_rates, 0)
+    b = np.stack(pmmh.acceptance_nums, 0)
+    with open(os.path.join(save_dir, 'acceptance_number.pkl'), 'wb') as f:
+        pickle.dump(b, f)
+    with open(os.path.join(save_dir, 'acceptance_rate.pkl'), 'wb') as f:
+        pickle.dump(a, f)
+    with open(os.path.join(save_dir, 'ess.pkl'), 'wb') as f:
+        pickle.dump(pmmh.ess_df, f)
 
 with open(os.path.join(save_dir, 'chain.pkl'), 'wb') as f:
     pickle.dump(pmmh.chain, f)
+    print("Saved chain")
+    
+print("Done")
 
 # Correlated
 # pmmh = CorrPMMH(ssm_cls=ssm_cls, data=y,

@@ -2,6 +2,8 @@ from particles import mcmc
 from particles import smc_samplers as ssp
 import numpy as np
 from scipy import stats
+from utils import ess
+import pandas as pd
 from correlated import SMCCorrelated, SMCCorrelated2, SMCCorrelatedIID, SMCCorrelatedIIDComplex
 
 class PMMH(mcmc.PMMH):
@@ -14,6 +16,8 @@ class PMMH(mcmc.PMMH):
             self.states = []
             self.acceptance_rates = []
             self.acceptance_nums = []
+            self.ess_df = pd.DataFrame(columns = self.chain.theta.dtype.fields.keys())
+            # self.ess_df2 = pd.DataFrame(columns = self.chain.theta.dtype.fields.keys())
         else:
             self.smc_options = {'collect':'off'}
 
@@ -31,6 +35,13 @@ class PMMH(mcmc.PMMH):
                     self.ssm_cls.params_name[p],
                     self.ssm_cls.params_transform[p](theta))
         print(msg)
+        if n > 99:
+            ess_n = self.eff_sample_size(n)
+            print("ESS", ess_n)
+            self.ess_df.loc[n] = ess_n
+            # new_df = pd.DataFrame([ess_n], columns=self.ess_df2.columns, 
+            #                       index=[n])
+            # self.ess_df2 = pd.concat([self.ess_df2, new_df])
 
     def alg_instance(self, theta):
         return self.smc_cls(fk=self.fk_cls(ssm=self.ssm_cls(**theta, **self.ssm_options),
@@ -49,6 +60,18 @@ class PMMH(mcmc.PMMH):
                 self.states.append(np.array(pf.hist.extract_one_trajectory()))
                 self.acceptance_rates.append(self.acc_rate)
                 self.acceptance_nums.append(self.nacc)
+    
+    def eff_sample_size(self, n):
+        df = pd.DataFrame(self.chain.theta)
+        ess_list = []
+        for col in df.columns:
+            var = df[col]
+            ess_list.append(ess(var))
+        # self.ess_df.loc[n] = ess_list
+        return ess_list
+            
+            
+            
     
     # def step(self, n):
     #     z = stats.norm.rvs(size=self.dim)
